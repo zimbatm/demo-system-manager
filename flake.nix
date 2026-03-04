@@ -26,11 +26,13 @@
       '';
     in
     {
-      apps.${system}.switch = {
-        type = "app";
-        program = "${switch}";
+      apps.${system} = {
+        switch = {
+          type = "app";
+          program = "${switch}";
+        };
+        default = self.apps.${system}.switch;
       };
-      apps.${system}.default = self.apps.${system}.switch;
 
       formatter.${system} =
         (treefmt-nix.lib.evalModule pkgs {
