@@ -19,7 +19,7 @@ nix --extra-experimental-features 'nix-command flakes' run .#switch
 
 ## Pre-demo checklist
 
-- [ ] VM running: `ssh root@49.13.155.209`
+- [ ] VM running: `ssh root@46.224.195.213`
 - [ ] Repo cloned on VM: `/root/demo-system-manager`
 - [ ] system-manager already applied (base config)
 - [ ] Terminal font large enough for audience
@@ -30,7 +30,7 @@ nix --extra-experimental-features 'nix-command flakes' run .#switch
 ### 1. Show the VM (30 seconds)
 
 ```bash
-ssh root@49.13.155.209
+ssh root@46.224.195.213
 uname -a
 cat /etc/os-release | head -3
 # → Ubuntu 24.04, plain Linux kernel
