@@ -51,10 +51,11 @@ Jonas Chevalier — SF Nix Meetup, March 2026
 
 ## Live demo
 
-1. Fresh Ubuntu 24.04 VM on Hetzner
-2. Nix installed, minimal config applied
-3. Ask Claude Code to set up something
-4. Watch it edit → apply → verify
+1. SSH into a fresh Ubuntu 24.04 VM — no Nix
+2. Run bootstrap script — installs Nix, applies base config
+3. Slides while it builds (~4 min)
+4. Come back — system configured, packages installed
+5. Open Claude Code — vibe configure something live
 
 ---
 

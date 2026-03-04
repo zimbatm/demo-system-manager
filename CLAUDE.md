@@ -94,4 +94,3 @@ systemd.services.myapp = {
 - If a service needs a dedicated user/group, declare them in `users.users` / `users.groups`.
 - `services.userborn.enable = true;` is required for user management to work.
 - The `wheel` group GID is forced to 900 to avoid conflicts with Ubuntu's existing groups.
-- Nix build users (`nixbld1`-`nixbld32`) are pre-configured — don't remove them.

@@ -1,51 +1,46 @@
 # Demo Script
 
-## Bootstrap (one-time setup)
-
-```bash
-# Install Nix
-curl -sSfL https://artifacts.nixos.org/nix-installer | sh -s -- install
-. /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
-
-# Remove nix-installer's /etc/nix so system-manager can manage it
-rm -rf /etc/nix
-
-# Clone and apply
-git clone https://github.com/zimbatm/demo-system-manager.git
-cd demo-system-manager
-nix --extra-experimental-features 'nix-command flakes' run .#switch
-# After this first run, nix.conf is managed and flakes work natively
-```
-
-## Pre-demo checklist
-
-- [ ] VM running: `ssh root@46.224.195.213`
-- [ ] Repo cloned on VM: `/root/demo-system-manager`
-- [ ] system-manager already applied (base config)
-- [ ] Terminal font large enough for audience
-- [ ] Claude Code installed and authenticated
-
 ## Flow
 
-### 1. Show the VM (30 seconds)
+### 1. SSH into fresh VM, show it's plain Ubuntu (~30s)
 
 ```bash
 ssh root@46.224.195.213
 uname -a
 cat /etc/os-release | head -3
-# → Ubuntu 24.04, plain Linux kernel
+# → Ubuntu 24.04, plain Linux kernel, no Nix
 ```
 
-### 2. Show the config (30 seconds)
+"This is a stock Ubuntu 24.04 VM. No Nix. No NixOS."
+
+### 2. Kick off bootstrap (~15s)
 
 ```bash
-cat hosts/demo/configuration.nix
-# → Minimal: just packages, users, basic etc files
-cat CLAUDE.md
-# → Quick scroll: this is what Claude knows about system-manager
+curl -sL https://raw.githubusercontent.com/zimbatm/demo-system-manager/main/bootstrap.sh | bash
 ```
 
-### 3. Open Claude Code and ask it to configure something (the vibe part)
+"This installs Nix and applies our base config. Let it run while I explain."
+
+### 3. Switch to slides (~3-4 min)
+
+Present slides while bootstrap runs in background. The ~5min build time is hidden behind the presentation.
+
+### 4. Come back to the terminal — bootstrap is done
+
+```bash
+source /etc/profile.d/system-manager-path.sh
+which rg
+id demo
+# → Nix-managed packages and users on Ubuntu
+```
+
+"Nix modules on Ubuntu. No NixOS install."
+
+### 5. Open Claude Code for vibe configuring (~5 min)
+
+```bash
+cd demo-system-manager
+```
 
 Option A — nginx with a static site:
 > "Set up nginx serving a simple welcome page on port 80. Include a nice HTML page."
@@ -56,14 +51,14 @@ Option B — full dev environment:
 Option C — monitoring stack:
 > "Install and configure prometheus-node-exporter as a systemd service"
 
-### 4. Watch Claude work
+### 6. Watch Claude work
 
 - Claude reads `CLAUDE.md`, understands the available modules
 - Edits `configuration.nix`
 - Runs `nix run .#switch`
 - Shows the result
 
-### 5. Verify (30 seconds)
+### 7. Verify (~30s)
 
 For nginx:
 ```bash
@@ -79,9 +74,10 @@ tmux --version
 
 ## Timing
 
-- Slides: ~3 minutes
-- Demo: ~5 minutes
-- Total: ~8 minutes
+- Show VM + bootstrap: ~1 min
+- Slides (while bootstrap runs): ~4 min
+- Vibe configuring demo: ~5 min
+- Total: ~10 minutes
 
 ## Backup plan
 
@@ -92,8 +88,6 @@ If Claude Code is slow or the network is flaky:
 ## Reset for re-demo
 
 ```bash
-# On the VM, revert to base config:
-cd /root/demo-system-manager
-git checkout main -- hosts/demo/configuration.nix
-nix run .#switch
+# Destroy and recreate the VM, then bootstrap again:
+curl -sL https://raw.githubusercontent.com/zimbatm/demo-system-manager/main/bootstrap.sh | bash
 ```
