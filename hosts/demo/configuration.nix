@@ -17,22 +17,11 @@
     services.userborn.enable = true;
 
     # Users
-    users.users = {
-      demo = {
-        isNormalUser = true;
-        extraGroups = [ "wheel" ];
-      };
-    }
-    // lib.genAttrs (builtins.map (n: "nixbld${toString n}") (lib.range 1 32)) (name: {
-      isSystemUser = true;
-      group = "nixbld";
-      uid = 30000 + lib.toInt (lib.removePrefix "nixbld" name);
-    });
-    users.groups.wheel.gid = lib.mkForce 900;
-    users.groups.nixbld = {
-      gid = 30000;
-      members = builtins.map (n: "nixbld${toString n}") (lib.range 1 32);
+    users.users.demo = {
+      isNormalUser = true;
+      extraGroups = [ "wheel" ];
     };
+    users.groups.wheel.gid = lib.mkForce 900;
 
     # Allow wheel to sudo without password
     environment.etc."sudoers.d/wheel".text = ''
