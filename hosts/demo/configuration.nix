@@ -25,13 +25,13 @@
     services.userborn.enable = true;
 
     # Users
-    users.users.demo = {
-      isNormalUser = true;
-      extraGroups = [ "wheel" ];
-    };
-
-    # Nix build users
-    users.users = lib.genAttrs (builtins.map (n: "nixbld${toString n}") (lib.range 1 32)) (name: {
+    users.users = {
+      demo = {
+        isNormalUser = true;
+        extraGroups = [ "wheel" ];
+      };
+    }
+    // lib.genAttrs (builtins.map (n: "nixbld${toString n}") (lib.range 1 32)) (name: {
       isSystemUser = true;
       group = "nixbld";
       uid = 30000 + lib.toInt (lib.removePrefix "nixbld" name);
