@@ -1,5 +1,22 @@
 # Demo Script
 
+## Bootstrap (one-time setup)
+
+```bash
+# Install Nix
+curl -sSfL https://artifacts.nixos.org/nix-installer | sh -s -- install
+. /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh
+
+# Remove nix-installer's /etc/nix so system-manager can manage it
+rm -rf /etc/nix
+
+# Clone and apply
+git clone https://github.com/zimbatm/demo-system-manager.git
+cd demo-system-manager
+nix --extra-experimental-features 'nix-command flakes' run .#switch
+# After this first run, nix.conf is managed and flakes work natively
+```
+
 ## Pre-demo checklist
 
 - [ ] VM running: `ssh root@49.13.155.209`
