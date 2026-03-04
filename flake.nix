@@ -40,7 +40,7 @@
           programs.nixfmt.enable = true;
         }).config.build.wrapper;
 
-      systemConfigs.demo = system-manager.lib.makeSystemConfig {
+      systemConfigs.default = system-manager.lib.makeSystemConfig {
         modules = [
           ./hosts/demo/configuration.nix
         ];
