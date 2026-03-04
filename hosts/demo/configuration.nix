@@ -7,14 +7,6 @@
   config = {
     nixpkgs.hostPlatform = "x86_64-linux";
 
-    # Nix configuration
-    nix.settings = {
-      experimental-features = lib.mkDefault [
-        "nix-command"
-        "flakes"
-      ];
-    };
-
     # System packages
     environment.systemPackages = [
       pkgs.ripgrep
