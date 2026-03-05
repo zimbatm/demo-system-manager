@@ -16,7 +16,7 @@ This provides: presenterm, hcloud, claude-code, socat, jq.
 nix run
 ```
 
-This launches a tmux session with presenterm on the left and Claude Code + slide-follower on the right.
+This launches a tmux session with presenterm on the left and Claude Code on the right. When you advance slides, speaker notes are automatically typed into Claude's pane.
 
 ## Manual setup
 
@@ -32,32 +32,27 @@ tmux new-session -s demo \; split-window -h \; select-pane -t 0
 presenterm --publish-speaker-notes demo/slides.md
 ```
 
-### 3. Start the slide follower (background)
-
-In any shell (or the right pane before starting Claude):
-
-```bash
-bash demo/slide-follower.sh demo/slides.md &
-```
-
-This listens for presenterm UDP events and writes speaker notes to `.current-note`.
-
-### 4. Right pane: start Claude Code
+### 3. Right pane: start Claude Code
 
 ```bash
 claude
 ```
 
-Then tell Claude: **`/demo`**
+### 4. Start the slide follower (background)
 
-Claude will read `.current-note` each time you say "next".
+In a separate shell:
+
+```bash
+bash demo/slide-follower.sh demo/slides.md demo:0.1 &
+```
+
+This listens for presenterm UDP events and types speaker notes directly into Claude's tmux pane.
 
 ## Running the demo
 
 1. Advance slides in the left pane with arrow keys
-2. In the right pane, say **"next"** to Claude after each slide advance
-3. Claude reads `.current-note`, sees the speaker note instruction, and executes it
-4. Some slides are informational (no speaker note) — Claude will say so and wait
+2. Speaker notes are automatically sent to Claude -- no manual interaction needed
+3. Some slides are informational (no speaker note) -- nothing is sent
 
 ## Timing
 

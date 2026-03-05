@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Listens for presenterm UDP events and writes speaker notes to .current-note
+# Listens for presenterm UDP events and types speaker notes into Claude's tmux pane.
 #
-# Usage: bash slide-follower.sh [slides.md]
+# Usage: bash slide-follower.sh <slides.md> <tmux-target-pane>
 #
-# Requires: socat, jq
+# Requires: socat, jq, tmux
 set -euo pipefail
 
-slides_file="${1:-slides.md}"
+slides_file="${1:?Usage: slide-follower.sh <slides.md> <tmux-target-pane>}"
+target_pane="${2:?Usage: slide-follower.sh <slides.md> <tmux-target-pane>}"
 
 if [[ ! -f "$slides_file" ]]; then
   echo "Error: slides file not found: $slides_file" >&2
@@ -46,6 +47,7 @@ extract_note() {
 
 echo "Listening for presenterm events on UDP port 59418..." >&2
 echo "Slides file: $slides_file" >&2
+echo "Target pane: $target_pane" >&2
 
 socat -u UDP-RECV:59418,bind=127.255.255.255,reuseaddr - | while IFS= read -r event; do
   # Parse the slide number from the JSON event
@@ -55,14 +57,11 @@ socat -u UDP-RECV:59418,bind=127.255.255.255,reuseaddr - | while IFS= read -r ev
     continue
   fi
 
-  # Account for the front-matter/title slide: presenterm uses slide 0
-  # for the title (generated from front matter), so the first <!-- end_slide -->
-  # separated content is slide 1 in presenterm's numbering.
   note=$(extract_note "$slide")
 
   if [[ -n "$note" ]]; then
-    echo "$note" > .current-note
-    echo "[slide $slide] Updated .current-note: $note" >&2
+    echo "[slide $slide] Sending to Claude: $note" >&2
+    tmux send-keys -t "$target_pane" "$note" Enter
   else
     echo "[slide $slide] No speaker note" >&2
   fi
