@@ -1,3 +1,9 @@
 result
 result-*
 .direnv/
+.current-note
+
+# Override global .claude ignore to track slash commands
+!.claude/
+.claude/*
+!.claude/commands/

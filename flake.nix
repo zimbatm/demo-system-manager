@@ -18,7 +18,14 @@
     }:
     let
       system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfreePredicate =
+          pkg:
+          builtins.elem (pkgs.lib.getName pkg) [
+            "claude-code"
+          ];
+      };
       sm = system-manager.packages.${system}.default;
 
       switch = pkgs.writeShellScript "switch" ''
@@ -26,12 +33,48 @@
       '';
     in
     {
+      devShells.${system}.default = pkgs.mkShell {
+        packages = [
+          pkgs.presenterm
+          pkgs.hcloud
+          pkgs.claude-code
+          pkgs.socat
+          pkgs.jq
+        ];
+      };
+
       apps.${system} = {
         switch = {
           type = "app";
           program = "${switch}";
         };
-        default = self.apps.${system}.switch;
+        demo =
+          let
+            demoDir = pkgs.runCommand "demo-assets" { } ''
+              mkdir -p $out
+              cp ${./demo/run-demo.sh} $out/run-demo.sh
+              cp ${./demo/slide-follower.sh} $out/slide-follower.sh
+              cp ${./demo/slides.md} $out/slides.md
+              cp ${./demo/numtide-logo.png} $out/numtide-logo.png
+            '';
+            runtimePath = pkgs.lib.makeBinPath [
+              pkgs.tmux
+              pkgs.presenterm
+              pkgs.claude-code
+              pkgs.socat
+              pkgs.jq
+              pkgs.coreutils
+            ];
+            wrapper = pkgs.writeShellScript "run-demo" ''
+              export PATH="${runtimePath}:$PATH"
+              exec ${pkgs.bash}/bin/bash ${demoDir}/run-demo.sh "$@"
+            '';
+          in
+          {
+            type = "app";
+            program = "${wrapper}";
+          };
+        default = self.apps.${system}.demo;
       };
 
       formatter.${system} =
