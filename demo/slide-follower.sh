@@ -14,17 +14,31 @@ if [[ ! -f "$slides_file" ]]; then
   exit 1
 fi
 
-# Extract the speaker note for a given slide index (0-based).
-# Slides are separated by <!-- end_slide --> markers.
-# Speaker notes are <!-- speaker_note: ... --> comments within a slide.
+# Extract the speaker note for a given slide number (1-based, matching presenterm).
+# Slide 1 is the title slide (front matter). Subsequent slides are separated by
+# <!-- end_slide --> markers. Speaker notes are <!-- speaker_note: ... --> comments.
 extract_note() {
-  local slide_index="$1"
-  local current_slide=0
+  local target_slide="$1"
+  local current_slide=1
+  local in_frontmatter=false
   local note=""
 
   while IFS= read -r line; do
-    if [[ "$line" =~ ^'<!-- end_slide -->'$ ]]; then
-      if [[ "$current_slide" -eq "$slide_index" ]]; then
+    # Skip front matter (slide 1: title)
+    if [[ "$current_slide" -eq 1 ]]; then
+      if [[ "$line" == "---" ]]; then
+        if "$in_frontmatter"; then
+          current_slide=2
+          note=""
+        else
+          in_frontmatter=true
+        fi
+      fi
+      continue
+    fi
+
+    if [[ "$line" == '<!-- end_slide -->' ]]; then
+      if [[ "$current_slide" -eq "$target_slide" ]]; then
         break
       fi
       current_slide=$((current_slide + 1))
@@ -32,15 +46,13 @@ extract_note() {
       continue
     fi
 
-    if [[ "$line" =~ ^'<!-- speaker_note: '\"(.*)\"' -->'$ ]]; then
-      note="${BASH_REMATCH[1]}"
-    elif [[ "$line" =~ ^'<!-- speaker_note: '(.*)' -->'$ ]]; then
+    if [[ "$line" =~ ^'<!-- speaker_note: '(.*)' -->'$ ]]; then
       note="${BASH_REMATCH[1]}"
     fi
   done < "$slides_file"
 
-  # Handle the last slide (no trailing end_slide)
-  if [[ "$current_slide" -eq "$slide_index" ]]; then
+  # Handle the last slide (no trailing end_slide marker)
+  if [[ "$current_slide" -eq "$target_slide" ]]; then
     echo "$note"
   fi
 }

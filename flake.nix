@@ -4,8 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     system-manager.url = "github:numtide/system-manager?ref=refs/pull/266/head";
-    system-manager.inputs.nixpkgs.follows = "nixpkgs";
-    system-manager.inputs.userborn.inputs.nixpkgs.follows = "nixpkgs";
     treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
@@ -40,6 +38,8 @@
           pkgs.claude-code
           pkgs.socat
           pkgs.jq
+          pkgs.ruff
+          pkgs.mypy
         ];
       };
 
@@ -53,7 +53,7 @@
             demoDir = pkgs.runCommand "demo-assets" { } ''
               mkdir -p $out
               cp ${./demo/run-demo.sh} $out/run-demo.sh
-              cp ${./demo/slide-follower.sh} $out/slide-follower.sh
+              cp ${./demo/slide-follower.py} $out/slide-follower.py
               cp ${./demo/slides.md} $out/slides.md
               cp ${./demo/numtide-logo.png} $out/numtide-logo.png
             '';
@@ -61,9 +61,10 @@
               pkgs.tmux
               pkgs.presenterm
               pkgs.claude-code
-              pkgs.socat
-              pkgs.jq
+              pkgs.python3
               pkgs.coreutils
+              pkgs.jq
+              pkgs.hcloud
             ];
             wrapper = pkgs.writeShellScript "run-demo" ''
               export PATH="${runtimePath}:$PATH"
