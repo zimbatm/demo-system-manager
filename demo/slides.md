@@ -13,6 +13,8 @@ author: Jonas Chevalier — SF Nix Meetup, March 2026
 - Cloud VMs, CI runners, containers — often Ubuntu/Debian
 - What if you could use NixOS modules... anywhere?
 
+<!-- speaker_note: Create a Hetzner VM named 'demo' using hcloud with Ubuntu 24.04, server type cx22, location fsn1. Show the IP address when done. -->
+
 <!-- end_slide -->
 
 ## system-manager
@@ -22,6 +24,8 @@ author: Jonas Chevalier — SF Nix Meetup, March 2026
 - Manages `/etc`, systemd services, users/groups, packages
 - One command: `system-manager switch --flake .`
 - No NixOS install required — just Nix
+
+<!-- speaker_note: SSH into the demo VM and run `uname -a` and `cat /etc/os-release | head -3` to show it's a plain Ubuntu system with no Nix installed. -->
 
 <!-- end_slide -->
 
@@ -36,6 +40,8 @@ author: Jonas Chevalier — SF Nix Meetup, March 2026
 | `systemd.services.*` | Systemd units |
 | `users.users.*` | Declare users |
 
+<!-- speaker_note: SSH into the demo VM and run `curl -sL https://raw.githubusercontent.com/zimbatm/demo-system-manager/main/bootstrap.sh | bash` to install Nix and apply the base config. This takes a few minutes — just kick it off, no need to wait for it to finish. -->
+
 <!-- end_slide -->
 
 ## Vibe configuring
@@ -47,30 +53,7 @@ author: Jonas Chevalier — SF Nix Meetup, March 2026
 - Applies changes with one command
 - Declarative + AI = vibe configuring
 
-<!-- end_slide -->
-
-## Live demo
-
-1. SSH into a fresh Ubuntu 24.04 VM
-2. Bootstrap: install Nix + base config
-3. Come back when it's done
-4. Vibe configure with Claude Code
-
-<!-- speaker_note: "SSH into the demo VM and show it's plain Ubuntu. Run uname -a and cat /etc/os-release | head -3 to prove there's no Nix installed yet." -->
-
-<!-- end_slide -->
-
-## Bootstrap
-
-```
-curl -sL https://raw.githubusercontent.com/zimbatm/demo-system-manager/main/bootstrap.sh | bash
-```
-
-Installs Nix and applies the base system-manager config.
-
-Takes ~4 minutes to build.
-
-<!-- speaker_note: "Run the bootstrap script on the VM. Then come back to the slides while it builds." -->
+<!-- speaker_note: SSH into the demo VM and run `cat /root/demo-system-manager/CLAUDE.md` to show the instructions Claude uses to understand the system. -->
 
 <!-- end_slide -->
 
@@ -88,6 +71,8 @@ demo-system-manager/
 
 `CLAUDE.md` tells Claude what modules exist and how to apply.
 
+<!-- speaker_note: SSH into the demo VM and run `cat /root/demo-system-manager/hosts/demo/configuration.nix` to show the current system configuration. -->
+
 <!-- end_slide -->
 
 ## Bootstrap done!
@@ -98,7 +83,7 @@ Let's verify the system is configured:
 - Users and groups created
 - system-manager active
 
-<!-- speaker_note: "Check that bootstrap completed. Run source /etc/profile.d/system-manager-path.sh && which rg && id demo to show Nix-managed packages and users are working on Ubuntu." -->
+<!-- speaker_note: SSH into the demo VM and run `source /etc/profile.d/system-manager-path.sh && which rg && id demo` to verify that Nix-managed packages and users are working on Ubuntu. -->
 
 <!-- end_slide -->
 
@@ -108,7 +93,7 @@ Let's ask Claude to set up nginx with a welcome page.
 
 > "Set up nginx serving a welcome page on port 80 with a nice HTML page"
 
-<!-- speaker_note: "Edit configuration.nix to add nginx serving a simple welcome page on port 80. Add a nice HTML page as the root. Include the acme user/group and nginx group as documented in CLAUDE.md. Then apply with nix run .#switch." -->
+<!-- speaker_note: SSH into the demo VM, cd to demo-system-manager, and edit hosts/demo/configuration.nix to add nginx serving a welcome page on port 80. Write a nice HTML page as the root. Include the acme user/group and nginx group as documented in CLAUDE.md. Then run `nix run .#switch` on the VM to apply. -->
 
 <!-- end_slide -->
 
@@ -118,7 +103,7 @@ Let's ask Claude to set up nginx with a welcome page.
 curl localhost
 ```
 
-<!-- speaker_note: "Verify nginx is working by running curl localhost on the VM. Show the HTML output." -->
+<!-- speaker_note: SSH into the demo VM and run `curl localhost` to verify nginx is serving the welcome page. -->
 
 <!-- end_slide -->
 
@@ -139,3 +124,5 @@ curl localhost
 - **system-manager:** github.com/numtide/system-manager
 - **Claude Code:** claude.com/claude-code
 - **Numtide:** numtide.com
+
+<!-- speaker_note: Destroy the demo VM by running `hcloud server delete --poll demo`. Say goodbye to the VM. -->

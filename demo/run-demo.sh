@@ -12,6 +12,7 @@ session="demo"
 tmux new-session -d -s "$session" -x "$(tput cols)" -y "$(tput lines)" \
   "presenterm --publish-speaker-notes ${script_dir}/slides.md"
 tmux split-window -h -t "$session" "claude; exec bash"
+tmux select-pane -t "${session}:0.0"
 
 # Start slide-follower in the background, targeting the Claude pane
 bash "${script_dir}/slide-follower.sh" "${script_dir}/slides.md" "${session}:0.1" &

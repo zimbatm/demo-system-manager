@@ -61,9 +61,14 @@ This listens for presenterm UDP events and types speaker notes directly into Cla
 - Wrap-up: ~1 min
 - Total: ~10 minutes
 
+## Prerequisites
+
+- `HCLOUD_TOKEN` environment variable set for Hetzner Cloud API access
+
 ## Reset for re-demo
 
 ```bash
-# Destroy and recreate the VM, then bootstrap again:
-curl -sL https://raw.githubusercontent.com/zimbatm/demo-system-manager/main/bootstrap.sh | bash
+hcloud server delete demo
 ```
+
+The next run will create a fresh VM automatically via the speaker notes.
