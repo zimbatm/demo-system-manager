@@ -36,8 +36,10 @@
           pkgs.presenterm
           pkgs.hcloud
           pkgs.claude-code
-          pkgs.socat
-          pkgs.jq
+          (pkgs.python3.withPackages (ps: [
+            ps.pyyaml
+            ps.types-pyyaml
+          ]))
           pkgs.ruff
           pkgs.mypy
         ];
@@ -50,10 +52,12 @@
         };
         demo =
           let
+            demoPython = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
             demoDir = pkgs.runCommand "demo-assets" { } ''
               mkdir -p $out
               cp ${./demo/run-demo.sh} $out/run-demo.sh
-              cp ${./demo/slide-follower.py} $out/slide-follower.py
+              cp ${./demo/demo-steps.py} $out/demo-steps.py
+              cp ${./demo/steps.yaml} $out/steps.yaml
               cp ${./demo/slides.md} $out/slides.md
               cp ${./demo/numtide-logo.png} $out/numtide-logo.png
             '';
@@ -61,14 +65,24 @@
               pkgs.tmux
               pkgs.presenterm
               pkgs.claude-code
-              pkgs.python3
+              demoPython
               pkgs.coreutils
-              pkgs.jq
               pkgs.hcloud
             ];
             wrapper = pkgs.writeShellScript "run-demo" ''
               export PATH="${runtimePath}:$PATH"
               exec ${pkgs.bash}/bin/bash ${demoDir}/run-demo.sh "$@"
+            '';
+          in
+          {
+            type = "app";
+            program = "${wrapper}";
+          };
+        demo-only =
+          let
+            inherit (self.apps.${system}.demo) program;
+            wrapper = pkgs.writeShellScript "run-demo-only" ''
+              exec ${program} 12
             '';
           in
           {

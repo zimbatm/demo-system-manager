@@ -1,0 +1,88 @@
+steps:
+  # -- Part 1: Presentation (no directives, just advancing slides) --
+
+  - name: the-problem
+    description: Configuration drift and imperative tools
+
+  - name: the-gap
+    description: What fills the gap between NixOS and Ansible?
+
+  - name: system-manager
+    description: Declarative system config for any Linux distro
+
+  - name: origin-story
+    description: Created by Numtide, v1.0.0 in January 2026
+
+  - name: how-it-works
+    description: Two-phase build + activate architecture
+
+  - name: what-it-manages
+    description: Packages, /etc, systemd, users, tmpfiles, nginx, ACME
+
+  - name: what-it-does-not-manage
+    description: Kernel, bootloader -- by design, clean uninstall
+
+  - name: safety-model
+    description: State tracking, file ownership, generations
+
+  - name: nixos-comparison
+    description: NixOS vs system-manager comparison table
+
+  - name: remote-deployment
+    description: Deploy to one machine or a fleet via SSH
+
+  - name: getting-started
+    description: Install Nix, init, switch
+
+  - name: minimal-config
+    description: Example system.nix with nginx
+
+  # -- Part 2: Live demo --
+
+  - name: demo-time
+    description: Transition to live demo, create Hetzner VM
+    directives:
+      - "pane term bash"
+      - "style term bg=#1a1a2e"
+      - "type term hcloud server create --name demo --type cpx22 --location nbg1 --image ubuntu-24.04 $(hcloud ssh-key list -o noheader -o columns=name | sed 's/^/--ssh-key /' | tr '\\n' ' ')"
+
+  - name: ssh-bootstrap
+    description: SSH into VM and run bootstrap script
+    directives:
+      - "type term until ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=5 root@$(hcloud server ip demo); do echo 'Waiting for VM...'; sleep 3; done"
+      - "wait-for term (root@|~[#$])"
+      - "type term uname -a"
+      - "type term cat /etc/os-release | head -3"
+      - "type term curl -sL https://raw.githubusercontent.com/zimbatm/demo-system-manager/main/bootstrap.sh | bash"
+
+  - name: the-configuration
+    description: Show CLAUDE.md and configuration.nix on the VM
+    directives:
+      - "wait-for term (root@|~[#$])"
+      - "exec echo 'export ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY' | ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$(hcloud server ip demo) 'cat > /root/.env && chmod 600 /root/.env'"
+      - "type term cat /root/demo-system-manager/CLAUDE.md"
+      - "wait-for term (root@|~[#$])"
+      - "type term cat /root/demo-system-manager/hosts/demo/configuration.nix"
+
+  - name: live-vibe-configuring
+    description: Hand off to presenter for manual demos
+    directives:
+      - "wait-for term (root@|~[#$])"
+      - "type term source /root/.env && cd /root/demo-system-manager"
+
+  - name: why-this-matters
+    description: Wrap-up slide
+    directives:
+      - "wait-for term (root@|~[#$])"
+      - "type term exit"
+      - "wait-for term \\$"
+
+  - name: links
+    description: Clean up and delete VM
+    directives:
+      - "type term hcloud server delete demo"
+
+  - name: thanks
+    description: End demo
+    directives:
+      - "kill"

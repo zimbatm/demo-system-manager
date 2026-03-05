@@ -6,6 +6,11 @@
 {
   config = {
     nixpkgs.hostPlatform = "x86_64-linux";
+    nixpkgs.config.allowUnfreePredicate =
+      pkg:
+      builtins.elem (pkgs.lib.getName pkg) [
+        "claude-code"
+      ];
 
     # Use numtide's binary cache for faster builds
     nix.settings = {
@@ -15,6 +20,7 @@
 
     # System packages
     environment.systemPackages = [
+      pkgs.claude-code
       pkgs.ripgrep
       pkgs.htop
     ];

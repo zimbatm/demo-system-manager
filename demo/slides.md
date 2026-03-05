@@ -1,142 +1,235 @@
 ---
-title: Vibe Configuring
-sub_title: Declarative system config with AI
-author: Jonas Chevalier — SF Nix Meetup, March 2026
+title: system-manager
+sub_title: Declarative system config for Linux
+author: Jonas Chevalier — Bay Area Nix Meetup @ UC Berkeley OCF, March 2026
 ---
 
 ## The problem
 
-- Many environments mandate Ubuntu/Debian (compliance, vendor support, cloud images)
-- Ansible/Chef/Puppet are imperative — no atomic rollback, hard to reproduce
-- NixOS solves this but requires replacing the entire OS
+- Many orgs **mandate** Ubuntu/Debian (compliance, vendor support, cloud images)
+- Traditional tools are **imperative** — Ansible, Chef, Puppet
+  - Configuration drift over time
+  - No atomic rollback
+  - Hard to reproduce
+- NixOS solves all of this... but requires **replacing the entire OS**
 
-<!-- speaker_note:
-pane claude claude --dangerously-skip-permissions
-wait 3
-type claude Create a Hetzner VM named 'demo' using hcloud with Ubuntu 24.04, server type cpx22, location nbg1. List my SSH keys with hcloud ssh-key list and pass all of them with --ssh-key flags. Show the IP address when done.
--->
+<!-- end_slide -->
+
+## The gap
+
+```
+  Full NixOS          ???           Ansible/Chef
+  ┌──────────┐    ┌────────────┐    ┌──────────────┐
+  │ Replace  │    │ Declarative│    │  Imperative  │
+  │ whole OS │    │ on any     │    │  scripts on  │
+  │ with Nix │    │ distro*    │    │  any distro  │
+  └──────────┘    └────────────┘    └──────────────┘
+  Reproducible      ???            Config drift
+  All or nothing                   Flexible
+
+  * Requires systemd. Tested on Ubuntu, community support
+    for Debian, Fedora, Arch.
+```
+
+What if you could use NixOS modules **without replacing the OS**?
 
 <!-- end_slide -->
 
 ## system-manager
 
-- Nix modules on **any Linux distro**
-- Same familiar NixOS options: `services.nginx`, `environment.etc`, `users.users`
-- Manages `/etc`, systemd services, users/groups, packages
-- One command: `system-manager switch --flake .`
-- No NixOS install required — just Nix
+Declarative system configuration for **Linux distros with systemd**.
 
-<!-- speaker_note:
-pane ssh ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes root@$(hcloud server ip demo)
-wait 3
-type ssh uname -a
-type ssh cat /etc/os-release | head -3
--->
+- Same NixOS module syntax sysadmins already know
+- `services.nginx`, `environment.etc`, `systemd.services`, ...
+- Coexists with apt/dnf — doesn't replace your distro
+- **AI-friendly** — declarative Nix is easy for LLMs to read and write
+- One command to apply:
+
+```bash
+system-manager switch --flake . --sudo
+```
+
+<!-- end_slide -->
+
+## Origin story
+
+- Created by **Numtide** (Ramses / R-VdP) in February 2023
+- Grew from a real need: manage non-NixOS servers with Nix
+- Think **"Home Manager, but for the whole system"**
+- **v1.0.0** released January 2026 — production-ready
+- Full docs at **system-manager.net**
+
+<!-- end_slide -->
+
+## How it works
+
+Two phases, two binaries:
+
+```
+  ┌────────────────────────┐     ┌────────────────────────┐
+  │   1. BUILD (no root)   │     │  2. ACTIVATE (root)    │
+  │                        │     │                        │
+  │  Nix evaluates modules │────>│  Symlink /etc files    │
+  │  Builds all derivations│     │  Start/stop systemd    │
+  │  Pure, reproducible    │     │  Apply tmpfiles        │
+  │                        │     │  Register generation   │
+  └────────────────────────┘     └────────────────────────┘
+       system-manager               system-manager-engine
+       (unprivileged)               (privileged, via sudo)
+```
 
 <!-- end_slide -->
 
 ## What it manages
 
-| Module | What it does |
-|--------|-------------|
-| `environment.systemPackages` | Install packages |
-| `environment.etc.*` | Write files to /etc |
-| `services.nginx` | Full nginx config |
-| `security.acme` | Let's Encrypt certs |
-| `systemd.services.*` | Systemd units |
-| `users.users.*` | Declare users |
-
-<!-- speaker_note:
-type ssh curl -sL https://raw.githubusercontent.com/zimbatm/demo-system-manager/main/bootstrap.sh | bash
--->
+| Component | Where |
+|-----------|-------|
+| Packages | `/run/system-manager/sw/bin/` |
+| `/etc` files | Symlinks from Nix store |
+| systemd services | `/etc/systemd/system/` |
+| systemd timers, sockets, paths | `/etc/systemd/system/` |
+| tmpfiles.d | `/etc/tmpfiles.d/` |
+| Users and groups | Via userborn |
+| NixOS modules: nginx, ACME | Imported from nixpkgs |
+| Nix daemon settings | `/etc/nix/nix.conf` |
 
 <!-- end_slide -->
 
-## Vibe configuring
+## What it does NOT manage
 
-> "Configure my server" -> Claude Code edits the Nix config -> `nix run .#switch`
+- **Kernel** — managed by your distro
+- **Bootloader** — managed by your distro
+- **Files outside /etc** — except packages in `/run/`
 
-- Claude Code reads `CLAUDE.md` to understand the system
-- Edits `configuration.nix` like a NixOS config
-- Applies changes with one command
-- Declarative + AI = vibe configuring
+By design: **coexist peacefully** with apt, manual edits, home-manager.
 
-<!-- speaker_note:
-type ssh cat /root/demo-system-manager/CLAUDE.md
--->
+**Clean uninstall:** `system-manager deactivate --sudo` removes all managed
+files and stops all managed services — your system goes back to how it was.
 
 <!-- end_slide -->
 
-## The setup
+## Safety model
+
+- **Tracks every file** it manages in a state JSON
+- **Refuses to overwrite** unmanaged files
+- **Generational profiles** — every activation creates a numbered generation:
 
 ```
-demo-system-manager/
-├── flake.nix              # system-manager + nixpkgs
-├── hosts/demo/
-│   └── configuration.nix  # the config Claude edits
-├── CLAUDE.md              # instructions for Claude Code
-└── demo/
-    └── slides.md          # this presentation
+/nix/var/nix/profiles/system-manager-profiles/
+  system-manager-1-link -> /nix/store/...-system
+  system-manager-2-link -> /nix/store/...-system
+  system-manager         -> system-manager-3-link
 ```
 
-`CLAUDE.md` tells Claude what modules exist and how to apply.
-
-<!-- speaker_note:
-type ssh cat /root/demo-system-manager/hosts/demo/configuration.nix
--->
+- Rollback: switch to a previous generation
 
 <!-- end_slide -->
 
-## Bootstrap done!
+## NixOS vs system-manager
 
-Let's verify the system is configured:
-
-- Nix-managed packages available
-- Users and groups created
-- system-manager active
-
-<!-- speaker_note:
-type ssh source /etc/profile.d/system-manager-path.sh && which rg && id demo
--->
-
-<!-- end_slide -->
-
-## Vibe configure: nginx
-
-Let's ask Claude to set up nginx with a welcome page.
-
-> "Set up nginx serving a welcome page on port 80 with a nice HTML page"
-
-<!-- speaker_note:
-close ssh
-pane server-claude ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes root@$(hcloud server ip demo) "cd /root/demo-system-manager && ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY claude --dangerously-skip-permissions"
-wait 3
-type server-claude Set up nginx serving a welcome page on port 80 with a nice HTML page. Include the acme user/group and nginx group as documented in CLAUDE.md. Then run nix run .#switch to apply.
--->
+| | NixOS | system-manager |
+|---|---|---|
+| Base system | Nix all the way down | Your distro |
+| Kernel | Managed | Distro |
+| Package manager | Only Nix | Nix + apt/dnf |
+| `/etc` config | Declarative | Declarative |
+| systemd services | Declarative | Declarative |
+| Rollback | Full system | Services + packages |
+| Migration | All or nothing | Incremental |
 
 <!-- end_slide -->
 
-## Verify nginx
+## Remote deployment
 
 ```bash
-curl localhost
+# Deploy to one machine
+system-manager --target-host root@server \
+  switch --flake . --sudo
+
+# Deploy to a fleet
+for host in "${HOSTS[@]}"; do
+  system-manager --target-host "$host" \
+    switch --flake . --sudo
+done
 ```
 
-<!-- speaker_note:
-close server-claude
-pane ssh ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes root@$(hcloud server ip demo)
-wait 3
-type ssh curl localhost
--->
+Uses `nix-copy-closure` + SSH. Zero install on the target — just needs Nix.
+
+<!-- end_slide -->
+
+## Getting started
+
+```bash
+# Install Nix system-wide
+curl -sSfL https://artifacts.nixos.org/nix-installer \
+  | sh -s -- install
+
+# Initialize a new config
+nix run 'github:numtide/system-manager' -- init
+
+# Edit system.nix, then apply
+nix run 'github:numtide/system-manager' -- \
+  switch --flake . --sudo
+```
+
+<!-- end_slide -->
+
+## Minimal config
+
+```nix
+{ pkgs, ... }: {
+  nixpkgs.hostPlatform = "x86_64-linux";
+  environment.systemPackages = [ pkgs.htop pkgs.ripgrep ];
+
+  services.nginx = {
+    enable = true;
+    virtualHosts."localhost".root = "/var/www";
+  };
+}
+```
+
+<!-- end_slide -->
+
+## Demo time!
+
+For this demo, we have a pre-built config repo. Let's see it in action:
+
+1. Create an Ubuntu 24.04 VM on Hetzner
+2. Bootstrap: install Nix + apply the base config
+3. Vibe-configure the machine with Claude Code
+
+<!-- end_slide -->
+
+## SSH & bootstrap
+
+The bootstrap script:
+
+1. Installs Nix via the official installer
+2. Clones this repo onto the VM
+3. Runs `nix run .#switch` — first system-manager activation
+
+<!-- end_slide -->
+
+## The configuration
+
+- `CLAUDE.md` — teaches Claude Code how to use system-manager
+- `hosts/demo/configuration.nix` — the declarative system config
+
+<!-- end_slide -->
+
+## Live vibe configuring
+
+Let's configure the server -- by talking to Claude Code.
 
 <!-- end_slide -->
 
 ## Why this matters
 
-- **Nix without NixOS** — use Nix modules on any distro
-- **AI-friendly** — declarative config is easy for LLMs
-- **Reproducible** — it's all in git
-- **Fast iteration** — describe what you want, get it
+- **Nix without NixOS** — use Nix modules on Ubuntu, Debian, Fedora, ...
+- **AI-friendly** — declarative config is easy for LLMs to read and write
+- **Reproducible** — everything is in git, every change is a generation
+- **Incremental adoption** — start with one service, expand over time
+- **Production-ready** — v1.0.0, full docs, commercial support from Numtide
 
 <!-- end_slide -->
 
@@ -144,20 +237,12 @@ type ssh curl localhost
 
 ![](numtide-logo.png)
 
-- **Repo:** github.com/zimbatm/demo-system-manager
-- **system-manager:** github.com/numtide/system-manager
-- **Claude Code:** claude.com/claude-code
+- **Docs:** system-manager.net
+- **Repo:** github.com/numtide/system-manager
+- **This demo:** github.com/zimbatm/demo-system-manager
+- **Claude Code:** claude.ai/code
 - **Numtide:** numtide.com
-
-<!-- speaker_note:
-close ssh
-type claude Delete the demo VM by running hcloud server delete demo. Say goodbye to the VM.
--->
 
 <!-- end_slide -->
 
 ## Thanks!
-
-<!-- speaker_note:
-kill
--->
