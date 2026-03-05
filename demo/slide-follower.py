@@ -21,7 +21,7 @@ LISTEN_PORT = 59418
 
 NOTE_START_RE = re.compile(r"^<!-- speaker_note:\s*$")
 NOTE_END_RE = re.compile(r"^-->$")
-DIRECTIVE_RE = re.compile(r"^(pane|type|wait|close)\s+(.+)$")
+DIRECTIVE_RE = re.compile(r"^(pane|type|wait|wait-for|close)\s+(.+)$")
 KILL_RE = re.compile(r"^kill$")
 
 
@@ -133,6 +133,13 @@ def execute_directives(
             print(f"  Waiting {secs}s", file=sys.stderr)
             time.sleep(secs)
 
+        elif action == "wait-for":
+            name, _, pattern = args.partition(" ")
+            if not pattern:
+                print(f"  Error: wait-for needs a pattern: {line}", file=sys.stderr)
+                continue
+            wait_for_pane(name, pattern, panes)
+
         elif action == "close":
             name = args.strip()
             close_pane(name, panes)
@@ -192,6 +199,31 @@ def close_pane(name: str, panes: dict[str, str]) -> None:
 
     print(f"  Closing pane '{name}' ({pane_id})", file=sys.stderr)
     subprocess.run(["tmux", "kill-pane", "-t", pane_id], check=False)
+
+
+WAIT_FOR_POLL = 0.5  # seconds between polls
+
+
+def wait_for_pane(name: str, pattern: str, panes: dict[str, str]) -> None:
+    """Poll pane content until pattern appears."""
+    pane_id = panes.get(name)
+    if not pane_id:
+        print(f"  Error: no pane named '{name}'", file=sys.stderr)
+        return
+
+    compiled = re.compile(pattern)
+    print(f"  Waiting for '{pattern}' in pane '{name}'...", file=sys.stderr)
+
+    while True:
+        result = subprocess.run(
+            ["tmux", "capture-pane", "-p", "-t", pane_id],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode == 0 and compiled.search(result.stdout):
+            print(f"  Pattern matched in pane '{name}'", file=sys.stderr)
+            return
+        time.sleep(WAIT_FOR_POLL)
 
 
 def main() -> None:

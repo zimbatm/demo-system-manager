@@ -12,7 +12,7 @@ author: Jonas Chevalier — SF Nix Meetup, March 2026
 
 <!-- speaker_note:
 pane claude claude --dangerously-skip-permissions
-wait 3
+wait-for claude Claude
 type claude Create a Hetzner VM named 'demo' using hcloud with Ubuntu 24.04, server type cpx22, location nbg1. List my SSH keys with hcloud ssh-key list and pass all of them with --ssh-key flags. Show the IP address when done.
 -->
 
@@ -28,7 +28,7 @@ type claude Create a Hetzner VM named 'demo' using hcloud with Ubuntu 24.04, ser
 
 <!-- speaker_note:
 pane ssh ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes root@$(hcloud server ip demo)
-wait 3
+wait-for ssh (root@|~[#$])
 type ssh uname -a
 type ssh cat /etc/os-release | head -3
 -->
@@ -110,7 +110,7 @@ Let's ask Claude to set up nginx with a welcome page.
 <!-- speaker_note:
 close ssh
 pane server-claude ssh -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes root@$(hcloud server ip demo) "cd /root/demo-system-manager && ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY claude --dangerously-skip-permissions"
-wait 3
+wait-for server-claude Claude
 type server-claude Set up nginx serving a welcome page on port 80 with a nice HTML page. Include the acme user/group and nginx group as documented in CLAUDE.md. Then run nix run .#switch to apply.
 -->
 
@@ -125,7 +125,7 @@ curl localhost
 <!-- speaker_note:
 close server-claude
 pane ssh ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes root@$(hcloud server ip demo)
-wait 3
+wait-for ssh (root@|~[#$])
 type ssh curl localhost
 -->
 
