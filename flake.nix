@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    system-manager.url = "github:numtide/system-manager?ref=refs/pull/266/head";
+    system-manager.url = "github:numtide/system-manager";
     treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
@@ -55,7 +55,6 @@
             demoPython = pkgs.python3.withPackages (ps: [ ps.pyyaml ]);
             demoDir = pkgs.runCommand "demo-assets" { } ''
               mkdir -p $out
-              cp ${./demo/run-demo.sh} $out/run-demo.sh
               cp ${./demo/demo-steps.py} $out/demo-steps.py
               cp ${./demo/steps.yaml} $out/steps.yaml
               cp ${./demo/slides.md} $out/slides.md
@@ -71,18 +70,7 @@
             ];
             wrapper = pkgs.writeShellScript "run-demo" ''
               export PATH="${runtimePath}:$PATH"
-              exec ${pkgs.bash}/bin/bash ${demoDir}/run-demo.sh "$@"
-            '';
-          in
-          {
-            type = "app";
-            program = "${wrapper}";
-          };
-        demo-only =
-          let
-            inherit (self.apps.${system}.demo) program;
-            wrapper = pkgs.writeShellScript "run-demo-only" ''
-              exec ${program} 12
+              exec ${demoPython}/bin/python3 ${demoDir}/demo-steps.py start "$@"
             '';
           in
           {

@@ -25,36 +25,37 @@ This launches a tmux session with presenterm showing the slides.
 
 ## Presentation structure
 
-### Part 1: system-manager talk (slides 1-12)
+### Part 1: system-manager talk (slides 1-13)
 
 Pure presentation, no automation. Just `/next` to advance through:
 
-1. **the-problem** -- Config drift, imperative tools
-2. **the-gap** -- The space between NixOS and Ansible
-3. **system-manager** -- What it is
-4. **origin-story** -- Numtide, Ramses, v1.0.0
-5. **how-it-works** -- Build + activate architecture
-6. **what-it-manages** -- Packages, /etc, systemd, nginx
-7. **what-it-does-not-manage** -- Kernel, bootloader, files outside /etc
-8. **safety-model** -- State tracking, generations
-9. **nixos-comparison** -- NixOS vs system-manager table
-10. **remote-deployment** -- SSH deployment, fleet management
-11. **getting-started** -- nix run + init
-12. **minimal-config** -- Example system.nix with nginx
+1. **title** -- Title slide
+2. **the-problem** -- Config drift, imperative tools
+3. **the-gap** -- The space between NixOS and Ansible
+4. **system-manager** -- What it is
+5. **origin-story** -- Numtide, Ramses, v1.0.0
+6. **how-it-works** -- Build + activate architecture
+7. **what-it-manages** -- Packages, /etc, systemd, nginx
+8. **what-it-does-not-manage** -- Kernel, bootloader, files outside /etc
+9. **safety-model** -- State tracking, generations
+10. **nixos-comparison** -- NixOS vs system-manager table
+11. **remote-deployment** -- SSH deployment, fleet management
+12. **getting-started** -- nix run + init
+13. **minimal-config** -- Example system.nix with nginx
 
-### Part 2: live demo (slides 13-19)
+### Part 2: live demo (slides 14-20)
 
-13. **demo-time** -- Opens bash pane, creates Hetzner VM
-14. **ssh-bootstrap** -- SSHs into VM, runs bootstrap script
-15. **the-configuration** -- Shows CLAUDE.md and configuration.nix
-16. **live-vibe-configuring** -- Presenter takes over for manual demo
-17. **why-this-matters** -- Exits SSH, wrap-up slide
-18. **links** -- Deletes VM
-19. **thanks** -- Kills tmux session
+14. **demo-time** -- Opens bash pane, creates Hetzner VM
+15. **ssh-bootstrap** -- SSHs into VM, runs bootstrap script
+16. **the-configuration** -- Shows CLAUDE.md and configuration.nix
+17. **live-vibe-configuring** -- Presenter takes over for manual demo
+18. **why-this-matters** -- Exits SSH, wrap-up slide
+19. **links** -- Deletes VM
+20. **thanks** -- Kills tmux session
 
 ## Running the demo
 
-1. Start with `/demo-start` (or `nix run` manually)
+1. Start with `nix run`
 2. Type `/next` to advance each slide
 3. For Part 1, each `/next` just advances the slide -- talk freely
 4. At "demo-time", automation kicks in -- bash pane opens, VM is created
@@ -66,8 +67,6 @@ Pure presentation, no automation. Just `/next` to advance through:
 | Command | What it does |
 |---------|-------------|
 | `/next` | Advance one slide, execute directives |
-| `/demo-start` | Reset state and launch tmux session |
-| `/demo-status` | Show current step and active panes |
 
 ## Reset for re-demo
 

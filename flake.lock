@@ -79,11 +79,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1772542754,
-        "narHash": "sha256-WGV2hy+VIeQsYXpsLjdr4GvHv5eECMISX1zKLTedhdg=",
+        "lastModified": 1772198003,
+        "narHash": "sha256-I45esRSssFtJ8p/gLHUZ1OUaaTaVLluNkABkk6arQwE=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "8c809a146a140c5c8806f13399592dbcb1bb5dc4",
+        "rev": "dd9b079222d43e1943b6ebd802f04fd959dc8e61",
         "type": "github"
       },
       "original": {
@@ -150,16 +150,15 @@
         "userborn": "userborn"
       },
       "locked": {
-        "lastModified": 1770135845,
-        "narHash": "sha256-IcpaTFvWkg1Qj/twgCqW2oHYODQfreEwL2R/+K3kErI=",
+        "lastModified": 1772787095,
+        "narHash": "sha256-lOiQ41F7vVMgXs7lOliJLBaE8XRU0xGO3ywKEJU/uKw=",
         "owner": "numtide",
         "repo": "system-manager",
-        "rev": "f4ad00a0210666c8194271ee20a9b349fdce2835",
+        "rev": "e6ab588a536c158fabbca78a579dab2eb26846df",
         "type": "github"
       },
       "original": {
         "owner": "numtide",
-        "ref": "refs/pull/266/head",
         "repo": "system-manager",
         "type": "github"
       }
@@ -209,16 +208,16 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1769903681,
-        "narHash": "sha256-mXXakR75Iz6AFf/TYgIHE8SxOri2HyReYUYTT3lCEPA=",
-        "owner": "nikstur",
+        "lastModified": 1770377964,
+        "narHash": "sha256-q2pnlX2IW0kg80GLFnwWd/GigIpkuZnyKPLhrgJql3E=",
+        "owner": "jfroche",
         "repo": "userborn",
-        "rev": "88666e2d8931c7252411498c5b82feb9a8a4d8d4",
+        "rev": "55c2cd7952c207a62736a5bbd9499ea73da18d24",
         "type": "github"
       },
       "original": {
-        "owner": "nikstur",
-        "ref": "0.5.0",
+        "owner": "jfroche",
+        "ref": "system-manager",
         "repo": "userborn",
         "type": "github"
       }

@@ -16,8 +16,21 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import TypedDict
 
 import yaml
+
+
+class DemoState(TypedDict):
+    step: int
+    panes: dict[str, str]
+
+
+class Step(TypedDict, total=False):
+    name: str
+    description: str
+    directives: list[str]
+
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 STEPS_FILE = SCRIPT_DIR / "steps.yaml"
@@ -65,17 +78,18 @@ def expand_directives(directives: list[str]) -> list[str]:
 # -- State management ---------------------------------------------------------
 
 
-def load_state() -> dict[str, object]:
+def load_state() -> DemoState:
     if STATE_FILE.exists():
-        return json.loads(STATE_FILE.read_text())  # type: ignore[return-value]
+        data: DemoState = json.loads(STATE_FILE.read_text())
+        return data
     return {"step": 0, "panes": {}}
 
 
-def save_state(state: dict[str, object]) -> None:
+def save_state(state: DemoState) -> None:
     STATE_FILE.write_text(json.dumps(state, indent=2) + "\n")
 
 
-# -- tmux helpers (from slide-follower.py) ------------------------------------
+# -- tmux helpers -------------------------------------------------------------
 
 
 def create_pane(
@@ -232,29 +246,33 @@ def execute_directives(
 # -- Subcommands --------------------------------------------------------------
 
 
-def load_steps() -> list[dict[str, object]]:
+def load_steps() -> list[Step]:
     data = yaml.safe_load(STEPS_FILE.read_text())
-    return data["steps"]  # type: ignore[no-any-return]
+    steps: list[Step] = data["steps"]
+    return steps
 
 
 def cmd_next() -> None:
     steps = load_steps()
     state = load_state()
-    step_index: int = state["step"]  # type: ignore[assignment]
-    panes: dict[str, str] = state.get("panes", {})  # type: ignore[assignment]
+    step_index = state["step"]
+    panes = state["panes"]
 
     if step_index >= len(steps):
         print("No more steps.", file=sys.stderr)
         sys.exit(1)
 
     step = steps[step_index]
-    name: str = step["name"]  # type: ignore[assignment]
-    description: str = step.get("description", "")  # type: ignore[assignment]
-    directives: list[str] = step.get("directives", [])  # type: ignore[assignment]
+    name = step["name"]
+    description = step.get("description", "")
+    directives = step.get("directives", [])
 
-    # Advance presenterm
-    print("  Advancing slide...", file=sys.stderr)
-    subprocess.run(["tmux", "send-keys", "-t", f"{SESSION}:0.0", "Right"], check=False)
+    # Advance presenterm (skip on first step -- title slide is already showing)
+    if step_index > 0:
+        print("  Advancing slide...", file=sys.stderr)
+        subprocess.run(
+            ["tmux", "send-keys", "-t", f"{SESSION}:0.0", "Right"], check=False
+        )
 
     print(
         f"[step {step_index + 1}/{len(steps)}] {name}: {description}", file=sys.stderr
@@ -311,8 +329,9 @@ def cmd_start(step: int = 0) -> None:
             check=False,
         )
 
-    # Advance presenterm to the right slide
-    for _ in range(step):
+    # Advance presenterm to the right slide (step 0 is the title, no advance)
+    slides_to_advance = max(0, step - 1)
+    for _ in range(slides_to_advance):
         subprocess.run(
             ["tmux", "send-keys", "-t", f"{SESSION}:0.0", "Right"], check=False
         )
@@ -358,8 +377,8 @@ def cmd_reset() -> None:
 def cmd_status() -> None:
     steps = load_steps()
     state = load_state()
-    step_index: int = state["step"]  # type: ignore[assignment]
-    panes: dict[str, str] = state.get("panes", {})  # type: ignore[assignment]
+    step_index = state["step"]
+    panes = state["panes"]
 
     print(f"Step: {step_index}/{len(steps)}")
     if step_index < len(steps):
