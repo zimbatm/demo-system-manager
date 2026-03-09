@@ -1,9 +1,6 @@
 steps:
   # -- Part 1: Presentation (no directives, just advancing slides) --
 
-  - name: title
-    description: Title slide
-
   - name: the-problem
     description: Configuration drift and imperative tools
 

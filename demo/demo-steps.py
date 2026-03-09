@@ -4,7 +4,6 @@
 Usage:
     python3 demo-steps.py start     -- create tmux session with presenterm + claude
     python3 demo-steps.py next      -- advance one slide, execute directives
-    python3 demo-steps.py reset     -- reset state to step 0
     python3 demo-steps.py status    -- print current step info
 """
 
@@ -267,12 +266,11 @@ def cmd_next() -> None:
     description = step.get("description", "")
     directives = step.get("directives", [])
 
-    # Advance presenterm (skip on first step -- title slide is already showing)
-    if step_index > 0:
-        print("  Advancing slide...", file=sys.stderr)
-        subprocess.run(
-            ["tmux", "send-keys", "-t", f"{SESSION}:0.0", "Right"], check=False
-        )
+    # Advance presenterm
+    print("  Advancing slide...", file=sys.stderr)
+    subprocess.run(
+        ["tmux", "send-keys", "-t", f"{SESSION}:0.0", "Right"], check=False
+    )
 
     print(
         f"[step {step_index + 1}/{len(steps)}] {name}: {description}", file=sys.stderr
@@ -330,8 +328,7 @@ def cmd_start(step: int = 0) -> None:
         )
 
     # Advance presenterm to the right slide (step 0 is the title, no advance)
-    slides_to_advance = max(0, step - 1)
-    for _ in range(slides_to_advance):
+    for _ in range(step):
         subprocess.run(
             ["tmux", "send-keys", "-t", f"{SESSION}:0.0", "Right"], check=False
         )
@@ -368,12 +365,6 @@ def cmd_start(step: int = 0) -> None:
     os.execvp("tmux", ["tmux", "attach", "-t", SESSION])
 
 
-def cmd_reset() -> None:
-    if STATE_FILE.exists():
-        STATE_FILE.unlink()
-    print("State reset. Ready for step 1.")
-
-
 def cmd_status() -> None:
     steps = load_steps()
     state = load_state()
@@ -395,7 +386,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Demo step driver")
     parser.add_argument(
         "command",
-        choices=["start", "next", "reset", "status"],
+        choices=["start", "next", "status"],
         help="Subcommand to run",
     )
     parser.add_argument(
@@ -411,8 +402,6 @@ def main() -> None:
         cmd_start(args.step)
     elif args.command == "next":
         cmd_next()
-    elif args.command == "reset":
-        cmd_reset()
     elif args.command == "status":
         cmd_status()
 
