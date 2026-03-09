@@ -19,6 +19,9 @@ steps:
   - name: what-it-manages
     description: Packages, /etc, systemd, users, tmpfiles, nginx, ACME
 
+  - name: importing-nixos-modules
+    description: Import ~60% of NixOS modules via nixosModulesPath
+
   - name: what-it-does-not-manage
     description: Kernel, bootloader -- by design, clean uninstall
 

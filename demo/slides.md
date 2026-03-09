@@ -95,6 +95,25 @@ Two phases, two binaries:
 
 <!-- end_slide -->
 
+## Importing NixOS modules
+
+system-manager ships with a curated set (nginx, ACME, userborn, ...) but **~60% of NixOS modules work out of the box**.
+
+```nix
+{ nixosModulesPath, ... }:
+{
+  imports = [
+    (nixosModulesPath + "/services/monitoring/prometheus/exporters.nix")
+  ];
+}
+```
+
+Best candidates: modules that only need **systemd units + /etc files + packages**.
+
+Some modules need **stub options** for NixOS-specific deps (`boot.*`, activation scripts).
+
+<!-- end_slide -->
+
 ## What it does NOT manage
 
 - **Kernel** — managed by your distro
