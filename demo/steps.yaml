@@ -1,0 +1,85 @@
+steps:
+  # -- Part 1: Presentation (no directives, just advancing slides) --
+
+  - name: the-problem
+    description: Configuration drift and imperative tools
+
+  - name: the-gap
+    description: What fills the gap between NixOS and Ansible?
+
+  - name: system-manager
+    description: Declarative system config for any Linux distro
+
+  - name: origin-story
+    description: Created by Numtide, v1.0.0 in January 2026
+
+  - name: how-it-works
+    description: Two-phase build + activate architecture
+
+  - name: what-it-manages
+    description: Packages, /etc, systemd, users, tmpfiles, nginx, ACME
+
+  - name: importing-nixos-modules
+    description: Import ~60% of NixOS modules via nixosModulesPath
+
+  - name: what-it-does-not-manage
+    description: Kernel, bootloader -- by design, clean uninstall
+
+  - name: safety-model
+    description: State tracking, file ownership, generations
+
+  - name: nixos-comparison
+    description: NixOS vs system-manager comparison table
+
+  # -- Part 2: Live demo --
+
+  - name: demo-time
+    description: Transition to live demo, create Hetzner VM
+    directives:
+      - "pane term bash"
+      - "style term bg=#1a1a2e"
+      - "type term hcloud server create --name demo --type cpx22 --location nbg1 --image ubuntu-24.04 $(hcloud ssh-key list -o noheader -o columns=name | sed 's/^/--ssh-key /' | tr '\\n' ' ')"
+
+  - name: install-nix
+    description: SSH into VM, install Nix
+    directives:
+      - "type term until ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o BatchMode=yes -o ConnectTimeout=5 root@$(hcloud server ip demo); do echo 'Waiting for VM...'; sleep 3; done"
+      - "wait-for term (root@|~[#$])"
+      - "type term uname -a"
+      - "type term curl -sSfL https://artifacts.nixos.org/nix-installer | sh -s -- install --no-confirm"
+      - "wait-for term (root@|~[#$])"
+      - "type term . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
+
+  - name: system-manager-init
+    description: Run system-manager init, show generated config
+    directives:
+      - "type term nix run --accept-flake-config 'github:numtide/system-manager' -- init"
+      - "wait-for term (root@|~[#$])"
+      - "type term nix run --accept-flake-config 'github:numtide/system-manager' -- switch"
+      - "wait-for term (root@|~[#$])"
+      - "exec cat demo/CLAUDE.md | ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$(hcloud server ip demo) 'cat > ~/.config/system-manager/CLAUDE.md'"
+      - "exec printf '{\"apiKeyHelper\": \"echo %s\"}' \"$ANTHROPIC_API_KEY\" | ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null root@$(hcloud server ip demo) 'mkdir -p ~/.claude && cat > ~/.claude/settings.json'"
+
+  - name: live-vibe-configuring
+    description: Hand off to presenter for manual demos
+    directives:
+      - "wait-for term (root@|~[#$])"
+      - "type term cd ~/.config/system-manager"
+      - "wait-for term (root@|~[#$])"
+      - "type term nix run --accept-flake-config 'github:numtide/llm-agents.nix#claude-code'"
+      - "focus term"
+
+  - name: what-we-saw
+    description: Recap of the demo
+    directives:
+      - "focus term"
+
+  - name: links
+    description: Clean up and end demo
+    directives:
+      - "wait-for term (root@|~[#$])"
+      - "type term exit"
+      - "wait-for term \\$"
+      - "type term hcloud server delete demo"
+      - "wait-for term \\$"
+      - "type term exit"
